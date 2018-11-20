@@ -5,12 +5,12 @@
 The compilation and assembling of the program is simplified by the make build
 automation tool. Simply call the following instruction in main program folder
 ```
-Make all
+make all
 ```
 The compilation and linkage procedure is specified in the `Makefile` file.
 Use the cmd
 ```
-Make clean
+make clean
 ```
 to clean the main folder for all executables and object files
 
