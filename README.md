@@ -1,5 +1,8 @@
 # 32 bit RISCV simulator
 
+The program has been developed as part of an assignment for the DTU Course 02155 - Computer Architecture and Engineering. 
+Original assignment can be found at https://github.com/schoeberl/cae-lab . The test cases found in 'tests' folder has been obtained from here.
+
 ## Compiling the programs
 
 The compilation and assembling of the program is simplified by the make build
