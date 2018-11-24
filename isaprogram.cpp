@@ -44,6 +44,13 @@ bool ISAProgram::readFromFile(const char * filepath){
   return true;
 }
 
+bool ISAProgram::writeToFile(const char * filepath){
+  std::ofstream outfile(filepath, std::ios::binary);
+  outfile.write((char*) &registers_, 32*sizeof(int));
+  outfile.close();
+  return true;
+}
+
 
 /*
 * Function to step through program

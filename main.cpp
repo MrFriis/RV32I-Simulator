@@ -28,6 +28,7 @@ int main(int argc, char**argv){
     myProgram.step();
   }
   myProgram.printRegisters();
+  myProgram.writeToFile("out.bin");
 
   return 0;
 }

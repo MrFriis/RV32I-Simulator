@@ -16,7 +16,7 @@ class ISAProgram {
 
     bool readFromFile(const char * filepath);
     void step();
-    //bool writeToFile(const char *filepath)
+    bool writeToFile(const char * filepath);
 
     bool hasNext();
     void printRegisters();
