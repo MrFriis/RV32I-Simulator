@@ -7,9 +7,21 @@
 ISAProgram::ISAProgram(){
   pc_ = 0;
   buffer_ = NULL;
+  memory_ = NULL;
+  capacity_ = 0;
+  ecall_=false;
   //Init registers
   for(int i=0; i<32; i++){
     registers_[i] = 0;
+  }
+
+  //REMOVE
+  memory_ = new unsigned char[0x100010];
+  capacity_ = 0x100010;
+
+  //Fill memory
+  for(unsigned int i = 0; i<capacity_; i++){
+    memory_[i] = 0;
   }
 }
 
@@ -19,6 +31,10 @@ ISAProgram::~ISAProgram(){
   if(buffer_ != NULL){
       delete[] buffer_;
       buffer_ = NULL;
+  }
+  if(memory_ != NULL){
+    delete [] memory_;
+    memory_ = NULL;
   }
 }
 
@@ -60,6 +76,7 @@ void ISAProgram::step(){
 
   //Get fields
   int instr = *(buffer_+pc_);
+  printAsHex(instr);
   int opcode = instr & 0x7f;
   int funct3 = (instr>>12) & 0x7;
   int imm = (instr >> 20);
@@ -69,9 +86,32 @@ void ISAProgram::step(){
   int offset; //For program branch
 
   switch (opcode) {
-    case 0x37 :
-      std::cout << "lui x" << rd << " " << (instr >> 12) << '\n';
-      registers_[rd] = (instr >> 12) << 12;
+    case 0x03 : //load Instructions
+      switch(funct3) {
+        case 0x0 : //lb
+          std::cout << "lb x" << rd << " " << imm << "(x" << rs1 << ")" << '\n';
+          load(registers_[rd], registers_[rs1]+imm, 1);
+          break;
+        case 0x1 : //lH
+          std::cout << "lh x" << rd << " " << imm << "(x" << rs1 << ")" << '\n';
+          load(registers_[rd], registers_[rs1]+imm, 2);
+        break;
+        case 0x2 : //lW
+          std::cout << "lw x" << rd << " " << imm << "(x" << rs1 << ")" << '\n';
+          //std::cout << "Immediate field" << imm << '\n'; //REMOVE
+          //std::cout << "Loading into register no" << rd << "from address:" << registers_[rs1] + imm << '\n'; //REMVOE
+          load(registers_[rd], registers_[rs1]+imm, 4);
+          //std::cout << "Didnt colapse" << '\n'; //REMOVE
+        break;
+        case 0x4 : //lbu
+          std::cout << "lbu x" << rd << " " << imm << "(x" << rs1 << ")" << '\n';
+          load(registers_[rd], registers_[rs1]+imm, 1, true);
+        break;
+        case 0x5 : //lhu
+          std::cout << "lhu x" << rd << " " << imm << "(x" << rs1 << ")" << '\n';
+          load(registers_[rd], registers_[rs1]+imm, 2, true);
+        break;
+      }
       break;
     case 0x13 :
       switch (funct3) {
@@ -92,9 +132,35 @@ void ISAProgram::step(){
           }
           break;
         } break;
+    case 0x17 : //auipc
+      imm = ((instr >> 12) << 12);
+      std::cout << "auipc x" << rd << " " << imm << '\n';
+      registers_[rd] = pc_*4+imm;
+      break;
+    case 0x23 : //Save Instructions
+      imm = (imm >> 5) << 5 | rd; //Get immediate field
+      switch (funct3) {
+        case 0x0:
+          std::cout << "sb x" << rs2 << " " << imm << "(" << "x" << rs1 << ")" << '\n';
+          save(registers_[rs2], registers_[rs1]+imm, 1);
+          break;
+        case 0x1:
+          std::cout << "sh x" << rs2 << " " << imm << "(" << "x" << rs1 << ")" << '\n';
+          save(registers_[rs2], registers_[rs1]+imm, 2);
+          break;
+        case 0x2 :
+          std::cout << "sw x" << rs2 << " " << imm << "(" << "x" << rs1 << ")" << '\n';
+          save(registers_[rs2], registers_[rs1]+imm, 4);
+          //std::cout << "Memory saved " << (unsigned int) memory_[registers_[rs1]+imm] << " at address: " << registers_[rs1]+imm << '\n'; //REMOVE
+          break;
+      } break;
     case 0x33 :
       std::cout << "add x" << rd << " x" << rs1 << " x" << rs2 <<  '\n';
       registers_[rd] = registers_[rs1] + registers_[rs2];
+      break;
+    case 0x37 :
+      std::cout << "lui x" << rd << " " << (instr >> 12) << '\n';
+      registers_[rd] = (instr >> 12) << 12;
       break;
     case 0x63 : //Branch case
       offset = ((instr>>25)<<5)+((instr>>7)& 0x1f)-1;
@@ -117,16 +183,35 @@ void ISAProgram::step(){
           if(registers_[rs1]>=registers_[rs2]){pc_ = pc_+(offset/4)-1;}
           break;
       } break;
+    case 0x67: //jalr
+      std::cout << "jalr x" << rd << " x" << rs1 << " " << imm << std::endl;
+      registers_[rd] = (pc_+1) << 2;
+      pc_ = (registers_[rs1]+imm) >> 2;
+      pc_ = pc_-1;
+      break;
+    case 0x6f: //jal
+      //Get imm
+      imm = (instr>>30) << 20; //Get instr[20]
+      imm = imm | (((instr >> 12) & 0xff) << 12); //Get instr[19:12]
+      imm = imm | (((instr >> 20) & 0x1) << 11); //Get instr[11]
+      imm = imm | (((instr >> 21) & 0x3ff) << 1); //Get instr[10:1]
+      std::cout << "jal x" << rd << " " << imm << std::endl;
+      registers_[rd] = (pc_+1) << 2;
+      pc_ = pc_+(imm >> 2)-1; //Because of inc after switch
+      break;
     case 0x73 :
       std::cout << "Ecall - Exiting program" << '\n';
+      ecall_ = true;
       break;
   }
+
+  registers_[0] = 0;
 
   pc_++; //Increment program counter
 }
 
 bool ISAProgram::hasNext(){
-  return pc_ < length_? true : false;
+  return ((pc_ < length_) & !ecall_) ;
 }
 
 void ISAProgram::printRegisters(){
@@ -136,14 +221,68 @@ void ISAProgram::printRegisters(){
   }
 }
 
-
-/*
-*
+/* Function that prints out data stored on stack
 */
+void ISAProgram::printMemory(){
+  //Nothing
+}
+
 
 void ISAProgram::printProgram(){
   std::cout << "Program" << '\n' << std::endl;
   for(int i=0; i<length_; i++){
-    std::cout << *(buffer_+i) << '\n';
+    printAsHex(*(buffer_+i));
+    std::cout << "" << '\n';
+    //std::cout << *(buffer_+i) << '\n';
   }
+}
+
+//Helper methods
+
+bool ISAProgram::save(int w, unsigned int sp, unsigned int bytes){
+  for(unsigned int i=0; i < bytes; i++){
+    memory_[sp+i] = (unsigned char) (w>>(8*i)) & 0xff;
+  }
+  return true;
+}
+
+bool ISAProgram::load(int &w, unsigned int sp, unsigned int bytes, bool u){
+  w = 0;
+  for(unsigned int i=0; i<bytes; i++){
+    w = w | ((unsigned int) memory_[sp+i]) << (8*i);
+  }
+
+  if(u != true){
+    if((memory_[sp+bytes-1] >> 7) == 1){
+      for(int i=4; i>bytes; i--){
+        w = w | 0xff << (8*(i-1));
+      }
+    }
+  }
+  return true;
+}
+
+void ISAProgram::printAsHex(unsigned int instr){
+  int res = 0;
+  std::cout << "0x";
+  for(int i = 0; i<8; i++){
+    res = (instr >> (4*(7-i))) & 0xf;
+    switch(res){
+      case 10:
+        std::cout << "a"; break;
+      case 11:
+        std::cout << "b"; break;
+      case 12:
+        std::cout << "c"; break;
+      case 13:
+        std::cout << "d"; break;
+      case 14:
+        std::cout << "e"; break;
+      case 15:
+        std::cout << "f"; break;
+      default :
+        std::cout << res; break;
+    }
+  }
+  std::cout << "    ";
 }

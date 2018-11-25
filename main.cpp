@@ -23,12 +23,15 @@ int main(int argc, char**argv){
     return 0;
   }
 
+  myProgram.printProgram();
+
+
 
   while(myProgram.hasNext()){
     myProgram.step();
   }
   myProgram.printRegisters();
-  myProgram.writeToFile("out.bin");
+  //myProgram.writeToFile("out.bin");
 
   return 0;
 }
