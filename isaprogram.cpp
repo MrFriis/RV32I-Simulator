@@ -1,8 +1,12 @@
+/*
+* @file isaprogram.cpp
+* @author Martin Friis
+* Implementation for the isaprogram class
+*/
 
 #include <iostream>
 #include <fstream>
 #include "isaprogram.h"
-
 
 ISAProgram::ISAProgram(){
   pc_ = 0;
@@ -56,6 +60,10 @@ bool ISAProgram::readFromFile(const char * filepath){
 
   fread(buffer_, sizeof(buffer_), length_, fp);
   fclose(fp);
+
+  //Read the program to the stack
+
+
 
   return true;
 }
@@ -117,10 +125,26 @@ void ISAProgram::step(){
       switch (funct3) {
         case 0x0:
           std::cout << "addi x" << rd << " x" << rs1 << " " << imm <<  '\n';
-          registers_[rd] = registers_[rs1] + imm; break;
+          registers_[rd] = registers_[rs1] + imm;
+          break;
         case 0x1: //
           std::cout << "slli x" << rd << " x" << rs1 << " " << imm <<  '\n';
           registers_[rd] = registers_[rs1] << imm;
+          break;
+        case 0x2:
+          std::cout << "slti x" << rd << " x" << rs1 << " " << imm <<  '\n';
+          if(registers_[rs1] < imm){registers_[rd] = 1;}
+          else {registers_[rd] = 0;}
+          break;
+        case 0x3:
+          std::cout << "sltiu x" << rd << " x" << rs1 << " " << (unsigned int) (imm & 0xfff) <<  '\n';
+          if(registers_[rs1] < ((unsigned int) (imm & 0xfff) )){registers_[rd] = 1;}
+          else {registers_[rd] = 0;}
+          break;
+          break;
+        case 0x4:
+          std::cout << "xori x" << rd << " x" << rs1 << " " << imm <<  '\n';
+          registers_[rd] = registers_[rs1] ^ imm;
           break;
         case 0x5 :
           if(imm & 0xf00 == 0){
@@ -128,12 +152,22 @@ void ISAProgram::step(){
             registers_[rd] = registers_[rs1] >> imm;
           } else {
             std::cout << "srai x" << rd << " x" << rs1 << " " << (imm & 0x1f) <<  '\n';
+            //printAsHex(registers_[rs1]);
             registers_[rd] = registers_[rs1] >> (imm & 0x1f);
           }
+          break;
+        case 0x6 :
+          std::cout << "ori x" << rd << " x" << rs1 << " " << imm <<  '\n';
+          registers_[rd] = registers_[rs1] | imm;
+          break;
+        case 0x7 :
+            std::cout << "andi x" << rd << " x" << rs1 << " " << imm <<  '\n';
+            registers_[rd] = registers_[rs1] & imm;
           break;
         } break;
     case 0x17 : //auipc
       imm = ((instr >> 12) << 12);
+
       std::cout << "auipc x" << rd << " " << imm << '\n';
       registers_[rd] = pc_*4+imm;
       break;
@@ -155,12 +189,58 @@ void ISAProgram::step(){
           break;
       } break;
     case 0x33 :
-      std::cout << "add x" << rd << " x" << rs1 << " x" << rs2 <<  '\n';
-      registers_[rd] = registers_[rs1] + registers_[rs2];
+      switch(funct3){
+        case 0x0 :
+          if((instr >> 25) == 0){
+            std::cout << "add x" << rd << " x" << rs1 << " x" << rs2 <<  '\n';
+            registers_[rd] = registers_[rs1] + registers_[rs2];
+          } else {
+            std::cout << "sub x" << rd << " x" << rs1 << " x" << rs2 <<  '\n';
+            registers_[rd] = registers_[rs1] - registers_[rs2];
+          }
+          break;
+        case 0x1:
+          std::cout << "sll x" << rd << " x" << rs1 << " x" << (registers_[rs2] & 0x1f) <<  '\n';
+          registers_[rd] = registers_[rs1] << (registers_[rs2] & 0x1f);
+          break;
+        case 0x2:
+          std::cout << "slt x" << rd << " x" << rs1 << " x" << rs2 <<  '\n';
+          if(registers_[rs1] < registers_[rs2]){registers_[rd]=1;}
+          else{registers_[rd] = 0;}
+          break;
+        case 0x3:
+          std::cout << "sltu x" << rd << " x" << rs1 << " x" << rs2 <<  '\n';
+          if(registers_[rs1] < (unsigned int) registers_[rs2]){registers_[rd]=1;}
+          else{registers_[rd] = 0;}
+          break;
+        case 0x4:
+          std::cout << "XOR x" << rd << " x" << rs1 << " x" << rs2 <<  '\n';
+          registers_[rd] = registers_[rs1]^registers_[rs2];
+          break;
+        case 0x5:
+          if((instr >> 25) == 0){
+            std::cout << "SRL x" << rd << " x" << rs1 << " x" << (registers_[rs2] & 0x1f) <<  '\n';
+            registers_[rd] = ((unsigned int) registers_[rs1]) >> (registers_[rs2] & 0x1f);
+          } else {
+            std::cout << "SRA x" << rd << " x" << rs1 << " x" << (registers_[rs2] & 0x1f) <<  '\n';
+            registers_[rd] = registers_[rs1] >> (registers_[rs2] & 0x1f);
+          }
+          break;
+        case 0x6 :
+          std::cout << "OR x" << rd << " x" << rs1 << " x" << rs2 <<  '\n';
+          registers_[rd] = registers_[rs1] | registers_[rs2];
+          break;
+        case 0x7 :
+          std::cout << "AND x" << rd << " x" << rs1 << " x" << rs2 <<  '\n';
+          registers_[rd] = registers_[rs1] & registers_[rs2];
+          break;
+
+      }
+
       break;
     case 0x37 :
-      std::cout << "lui x" << rd << " " << (instr >> 12) << '\n';
-      registers_[rd] = (instr >> 12) << 12;
+      std::cout << "lui x" << rd << " " << ((instr >> 12) & 0xfffff) << '\n';
+      registers_[rd] = ((instr >> 12) & 0xfffff) << 12;
       break;
     case 0x63 : //Branch case
       offset = ((instr>>25)<<5)+((instr>>7)& 0x1f)-1;
@@ -180,7 +260,15 @@ void ISAProgram::step(){
           break;
         case 0x5 :
           std::cout << "bge x" << rs1 << " x" << rs2 << " " << offset <<  '\n';
-          if(registers_[rs1]>=registers_[rs2]){pc_ = pc_+(offset/4)-1;}
+          if(registers_[rs1]>=registers_[rs2]){pc_ = pc_+(offset >> 2)-1;}
+          break;
+        case 0x6 :
+          std::cout << "bltu x" << rs1 << " x" << rs2 << " " << offset <<  '\n';
+          if(registers_[rs1]< (unsigned) registers_[rs2]){pc_ = pc_+(offset/4)-1;}
+          break;
+        case 0x7 :
+          std::cout << "bgeu x" << rs1 << " x" << rs2 << " " << offset <<  '\n';
+          if(registers_[rs1]>= (unsigned) registers_[rs2]){pc_ = pc_+(offset >> 2)-1;}
           break;
       } break;
     case 0x67: //jalr
