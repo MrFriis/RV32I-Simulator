@@ -8,6 +8,7 @@
 #include <fstream>
 #include "isaprogram.h"
 
+//ISAProgram Constructor
 ISAProgram::ISAProgram(){
   pc_ = 0;
   buffer_ = NULL;
@@ -61,9 +62,13 @@ bool ISAProgram::readFromFile(const char * filepath){
   fread(buffer_, sizeof(buffer_), length_, fp);
   fclose(fp);
 
-  //Read the program to the stack
+  //Save the program to the memory
+  for(int i=0; i<length_; i++){
+    save(buffer_[i], i*4, 4);
+  }
 
-
+  delete[] buffer_;
+  buffer_=NULL;
 
   return true;
 }
@@ -83,7 +88,8 @@ bool ISAProgram::writeToFile(const char * filepath){
 void ISAProgram::step(){
 
   //Get fields
-  int instr = *(buffer_+pc_);
+  int instr = 0;
+  load(instr, 4*pc_, 4);
   printAsHex(instr);
   int opcode = instr & 0x7f;
   int funct3 = (instr>>12) & 0x7;
