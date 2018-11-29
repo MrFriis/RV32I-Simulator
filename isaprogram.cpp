@@ -11,7 +11,7 @@
 //ISAProgram Constructor
 ISAProgram::ISAProgram(){
   pc_ = 0;
-  buffer_ = NULL;
+  length_=0;
   memory_ = NULL;
   capacity_ = 0;
   ecall_=false;
@@ -30,13 +30,9 @@ ISAProgram::ISAProgram(){
   }
 }
 
-//DELETE buffer_
+//Delete main memory
 ISAProgram::~ISAProgram(){
   //Implemnt
-  if(buffer_ != NULL){
-      delete[] buffer_;
-      buffer_ = NULL;
-  }
   if(memory_ != NULL){
     delete [] memory_;
     memory_ = NULL;
@@ -45,6 +41,7 @@ ISAProgram::~ISAProgram(){
 
 bool ISAProgram::readFromFile(const char * filepath){
   FILE *fp;
+  unsigned int * buffer;
   long int fileSize;
 
   fp = fopen(filepath,"rb");
@@ -57,18 +54,18 @@ bool ISAProgram::readFromFile(const char * filepath){
   fseek(fp, 0, SEEK_SET);
 
   length_ = fileSize/4;
-  buffer_ = new unsigned int[length_];
+  buffer = new unsigned int[length_];
 
-  fread(buffer_, sizeof(buffer_), length_, fp);
+  fread(buffer, sizeof(buffer), length_, fp);
   fclose(fp);
 
   //Save the program to the memory
   for(int i=0; i<length_; i++){
-    save(buffer_[i], i*4, 4);
+    save(buffer[i], i*4, 4);
   }
 
-  delete[] buffer_;
-  buffer_=NULL;
+  delete[] buffer;
+  buffer=NULL;
 
   return true;
 }
@@ -325,9 +322,10 @@ void ISAProgram::printMemory(){
 void ISAProgram::printProgram(){
   std::cout << "Program" << '\n' << std::endl;
   for(int i=0; i<length_; i++){
-    printAsHex(*(buffer_+i));
+    int instr;
+    load(instr, 4*i, 4);
+    printAsHex(instr);
     std::cout << "" << '\n';
-    //std::cout << *(buffer_+i) << '\n';
   }
 }
 

@@ -24,7 +24,6 @@ class ISAProgram {
     void printMemory();
 
   private:
-    unsigned int * buffer_; //Program buffer
     int length_; //Program length
     int pc_; //Program counter
     int registers_[32]; //
