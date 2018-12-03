@@ -21,8 +21,8 @@ RV32ISimulator::RV32ISimulator(){
   }
 
   //Preallocating memory.
-  memory_ = new unsigned char[0x100010];
-  capacity_ = 0x100010;
+  memory_ = new unsigned char[0x100000];
+  capacity_ = 0x100000;
 
   //Fill memory
   for(unsigned int i = 0; i<capacity_; i++){
@@ -224,15 +224,15 @@ void RV32ISimulator::step(){
           else{registers_[rd] = 0;}
           break;
         case 0x4:
-          std::cout << "XOR x" << rd << " x" << rs1 << " x" << rs2 <<  '\n';
+          std::cout << "xor x" << rd << " x" << rs1 << " x" << rs2 <<  '\n';
           registers_[rd] = registers_[rs1]^registers_[rs2];
           break;
         case 0x5:
           if((instr >> 25) == 0){
-            std::cout << "SRL x" << rd << " x" << rs1 << " x" << (registers_[rs2] & 0x1f) <<  '\n';
+            std::cout << "srl x" << rd << " x" << rs1 << " x" << (registers_[rs2] & 0x1f) <<  '\n';
             registers_[rd] = ((unsigned int) registers_[rs1]) >> (registers_[rs2] & 0x1f);
           } else {
-            std::cout << "SRA x" << rd << " x" << rs1 << " x" << (registers_[rs2] & 0x1f) <<  '\n';
+            std::cout << "sra x" << rd << " x" << rs1 << " x" << (registers_[rs2] & 0x1f) <<  '\n';
             registers_[rd] = registers_[rs1] >> (registers_[rs2] & 0x1f);
           }
           break;
@@ -241,7 +241,7 @@ void RV32ISimulator::step(){
           registers_[rd] = registers_[rs1] | registers_[rs2];
           break;
         case 0x7 :
-          std::cout << "AND x" << rd << " x" << rs1 << " x" << rs2 <<  '\n';
+          std::cout << "and x" << rd << " x" << rs1 << " x" << rs2 <<  '\n';
           registers_[rd] = registers_[rs1] & registers_[rs2];
           break;
       }
