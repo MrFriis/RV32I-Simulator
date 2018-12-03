@@ -7,7 +7,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include "isaprogram.h"
+#include "RV32ISimulator.h"
 
 using namespace std;
 
@@ -22,8 +22,8 @@ int main(int argc, char**argv){
   //Get filepath for input file
   const char * filepath = argv[1];
 
-  //Construct simulation object
-  ISAProgram myProgram;
+  //Construct simulator object
+  RV32ISimulator myProgram;
   bool read = myProgram.readFromFile(filepath); //Read the input file
   if(!read){
     std::cout << "File not found :(" << '\n';
@@ -43,7 +43,7 @@ int main(int argc, char**argv){
   myProgram.printRegisters();
 
   //Dump the register content to file
-  myProgram.writeToFile("out.bin");
+  myProgram.writeToFile("out.res");
 
   return 0;
 }
@@ -57,7 +57,7 @@ int main(int argc, char**argv){
 /*
 * Todo:
 *   - include more instructions branch bltu bgeu & auipc
-*   - make ISAProgram a base class, and create inherited class
+*   - make RV32ISimulator a base class, and create inherited class
 *     RV32I, which override step function.
 *   - make possible to inherit as RV64I (maybe template header for in to long int conversion)
 *   - secure robust program - include error in data access fixes

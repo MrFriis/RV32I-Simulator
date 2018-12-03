@@ -1,5 +1,5 @@
 EXENAME = sim
-OBJS = main.o isaprogram.o
+OBJS = main.o rv32isimulator.o
 
 CXX = g++
 CXXFLAGS = -c
@@ -12,11 +12,11 @@ all: $(EXENAME)
 $(EXENAME) : $(OBJS)
 	$(LD) $(OBJS) -o $(EXENAME)
 
-main.o : main.cpp isaprogram.h
+main.o : main.cpp RV32ISimulator.h
 	$(CXX) $(CXXFLAGS) main.cpp -o main.o
 
-isaprogram.o : isaprogram.cpp isaprogram.h
-	$(CXX) $(CXXFLAGS) isaprogram.cpp -o isaprogram.o
+rv32isimulator.o : RV32ISimulator.cpp RV32ISimulator.h
+	$(CXX) $(CXXFLAGS) RV32ISimulator.cpp -o rv32isimulator.o
 
 clean:
 	rm *.o $(EXENAME)
