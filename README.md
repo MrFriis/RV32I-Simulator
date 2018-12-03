@@ -29,15 +29,4 @@ The input must be a binary file of compiled RISCV 32 ISA code.
 
 ### Output
 
-At termination the program makes a binary dump of the register content in file named 'out.bin'. The encoding is little endian.
-
-## To-do
-
-1. Further test developments for testing program functionality
-2. Remove print statements
-
-Further extensions to the program
-
-1. Making ISAProgram a base class for inheritance. (32 and 64 bit extensions)
-2. Inheritance class 32RVI
-3. Throw errors for missed instructions
+At termination the program makes a binary dump of the register content in file named 'out.res'. The encoding is little endian.
