@@ -30,35 +30,24 @@ int main(int argc, char**argv){
     return 0;
   }
 
-  //myProgram.printProgram();
-
-  //myProgram.printProgram();
-
   //Run the program
   while(myProgram.hasNext()){
     myProgram.step();
   }
 
-  //Write register content
-  myProgram.printRegisters();
-
+  //Perhaps get name of output file
+  const char * outFile;
+  if(argc != 2){
+    outFile = argv[2];
+  } else {
+      outFile = "out.res";
+  }
+  
   //Dump the register content to file
-  myProgram.writeToFile("out.res");
+  myProgram.writeToFile(outFile);
+
+
+  std::cout << '\n' << "Register content dumped in file: " << outFile << '\n';
 
   return 0;
 }
-
-// Fix memory by combining program buffer and the memory. Store program from mem_0 to mem_[length]
-// Load instruction by using load function to get int instruction.
-// The auipc will make sense as it will load pc_
-// - fix pc_ to be increments of 4 when fixing the memory.
-
-
-/*
-* Todo:
-*   - include more instructions branch bltu bgeu & auipc
-*   - make RV32ISimulator a base class, and create inherited class
-*     RV32I, which override step function.
-*   - make possible to inherit as RV64I (maybe template header for in to long int conversion)
-*   - secure robust program - include error in data access fixes
-*/

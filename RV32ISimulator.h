@@ -29,7 +29,6 @@ class RV32ISimulator {
     int registers_[32]; //
     bool ecall_; //For program termination
 
-    //capacity currently not used
     unsigned int capacity_; //Memory capacity
     unsigned char * memory_; //Main memory
 
